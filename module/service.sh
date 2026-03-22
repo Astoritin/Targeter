@@ -127,21 +127,16 @@ while true; do
     [ -f "$WHITELIST" ] && total_whitelist=$(grep -c '[^[:space:]]' "$WHITELIST")
     manual_count=$((total_target_list - total_auto_add))
 
-    info_auto_adjust=""
-    info_auto_add=""
-    info_skip_add=""
-    info_whitelist=""
+    mod_desc="✅Tricky Store: ${total_target_list}"
+    
+    if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
+        mod_desc="${mod_desc} (manual: ${manual_count}, auto: ${total_auto_add}, skip: ${total_skip_add})"
+    fi
 
-    [ "$total_auto_add" -gt 0 ] && info_auto_add=", auto: ${total_auto_add}"
-    [ "$total_skip_add" -gt 0 ] && info_skip_add=", skip: ${total_skip_add}"
-    info_auto_adjust="${info_auto_add}${info_skip_add}, manual: ${manual_count}"
-    [ "$total_auto_add" -eq 0 ] && [ "$total_skip_add" -eq 0 ] && info_auto_adjust=""
-    [ "$total_whitelist" -gt 0 ] && info_whitelist=", ✅Targeter Whitelist: ${total_whitelist}"
-
-    info_denylist=""
-    [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist}"
-
-    update_description "[✅Tricky Store scope: ${total_target_list}${info_auto_adjust}${info_denylist}${info_whitelist}] $MOD_DESC"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
+    [ "$total_whitelist" -gt 0 ] && mod_desc="${mod_desc}, ✅Targeter Whitelist: ${total_whitelist}"
+    
+    update_description "[${mod_desc}] $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
