@@ -125,18 +125,12 @@ while true; do
     [ -f "$PACKAGES_AUTO_ADD" ] && total_auto_add=$(grep -c '[^[:space:]]' "$PACKAGES_AUTO_ADD")
     [ -f "$PACKAGES_SKIP_ADD" ] && total_skip_add=$(grep -c '[^[:space:]]' "$PACKAGES_SKIP_ADD")
     [ -f "$WHITELIST" ] && total_whitelist=$(grep -c '[^[:space:]]' "$WHITELIST")
-
-    info_target="${total_target_list}"
-    [ "$total_auto_add" -gt 0 ] && info_target="${info_target} (+${total_auto_add})"
-    [ "$total_skip_add" -gt 0 ] && info_target="${info_target} (-${total_skip_add})"
+    manual_count=$((total_target_list - total_auto_add))
 
     info_denylist=""
-    [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist} item(s)"
+    [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist}"
 
-    info_whitelist=""
-    [ "$total_whitelist" -gt 0 ] && info_whitelist=", ✅Whitelist: ${total_whitelist} package(s)"
-
-    update_description "[✅Tricky Store scope: ${info_target} target(s)${info_denylist}${info_whitelist}] $MOD_DESC"
+    update_description "[✅Tricky Store: ${total_target_list}, ✅Manual: ${manual_count} Auto: ${total_auto_add} Skip: ${total_skip_add}${info_denylist}, ✅Whitelist: ${total_whitelist}] $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
