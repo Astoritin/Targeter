@@ -130,7 +130,7 @@ while true; do
     info_denylist=""
     [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist}"
 
-    update_description "[✅Tricky Store: ${total_target_list}, ✅Manual: ${manual_count} Auto: ${total_auto_add} Skip: ${total_skip_add}${info_denylist}, ✅Whitelist: ${total_whitelist}] $MOD_DESC"
+    update_description "[✅Tricky Store scope: ${total_target_list} (${manual_count} manual, ${total_auto_add} auto, ${total_skip_add} skip), ✅Targeter Whitelist: ${total_whitelist}${info_denylist}] $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
