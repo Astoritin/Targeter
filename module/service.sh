@@ -127,16 +127,16 @@ while true; do
     [ -f "$EXCLUDED" ] && total_excluded=$(grep -c '[^[:space:]]' "$EXCLUDED")
     total_custom=$((total_target_list - total_auto_add))
 
-    mod_desc="✅Tricky Store scope: ${total_target_list}"
+    mod_desc="Tricky Store scope: ${total_target_list} 📌"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc} (auto: ${total_auto_add}, skipped: ${total_skip_add}, custom: ${total_custom})"
+        mod_desc="${mod_desc} | ${total_auto_add} auto 🎰 ${total_custom} custom 🎨 ${total_skip_add} skip ✅"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
-    [ "$total_excluded" -gt 0 ] && mod_desc="${mod_desc}, ✅Excluded List: ${total_excluded}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc} | Magisk Denylist: ${total_denylist} 📑"
+    [ "$total_excluded" -gt 0 ] && mod_desc="${mod_desc} | Inbuilt Excluded List: ${total_excluded} 👉"
     
-    update_description "[${mod_desc}] $MOD_DESC"
+    update_description "${mod_desc} | $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
