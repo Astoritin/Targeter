@@ -134,7 +134,7 @@ while true; do
     [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist} item(s)"
 
     info_whitelist=""
-    [ "$total_whitelist" -gt 0 ] && info_whitelist=", ✅Whitelist: ${total_whitelist} item(s)"
+    [ "$total_whitelist" -gt 0 ] && info_whitelist=", ✅Whitelist: ${total_whitelist} package(s)"
 
     update_description "[✅Tricky Store scope: ${info_target} target(s)${info_denylist}${info_whitelist}] $MOD_DESC"
 
