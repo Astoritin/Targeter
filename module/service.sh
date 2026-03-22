@@ -117,15 +117,18 @@ while true; do
     total_denylist=0
     total_target_list=0
     total_auto_add=0
+    total_skip_add=0
     total_whitelist=0
 
     [ "$IS_MAGISK" = true ] && total_denylist=$(magisk --denylist ls | grep -c '[^[:space:]]')
     [ -f "$TARGET_LIST" ] && total_target_list=$(grep -c '[^[:space:]]' "$TARGET_LIST")
     [ -f "$PACKAGES_AUTO_ADD" ] && total_auto_add=$(grep -c '[^[:space:]]' "$PACKAGES_AUTO_ADD")
+    [ -f "$PACKAGES_SKIP_ADD" ] && total_skip_add=$(grep -c '[^[:space:]]' "$PACKAGES_SKIP_ADD")
     [ -f "$WHITELIST" ] && total_whitelist=$(grep -c '[^[:space:]]' "$WHITELIST")
 
     info_target="${total_target_list}"
     [ "$total_auto_add" -gt 0 ] && info_target="${info_target} (+${total_auto_add})"
+    [ "$total_skip_add" -gt 0 ] && info_target="${info_target} (-${total_skip_add})"
 
     info_denylist=""
     [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist} item(s)"
