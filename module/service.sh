@@ -127,14 +127,14 @@ while true; do
     [ -f "$EXCLUDED" ] && total_excluded=$(grep -c '[^[:space:]]' "$EXCLUDED")
     total_custom=$((total_target_list - total_auto_add))
 
-    mod_desc="✅TrickyStore: ${total_target_list}"
+    mod_desc="✅Tricky Store scope: ${total_target_list}"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc} (auto:${total_auto_add},skip:${total_skip_add},custom:${total_custom})"
+        mod_desc="${mod_desc} (auto: ${total_auto_add}, skipped: ${total_skip_add}, custom: ${total_custom})"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
-    [ "$total_excluded" -gt 0 ] && mod_desc="${mod_desc}, ✅Excluded: ${total_excluded}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
+    [ "$total_excluded" -gt 0 ] && mod_desc="${mod_desc}, ✅Excluded List: ${total_excluded}"
     
     update_description "[${mod_desc}] $MOD_DESC"
 
