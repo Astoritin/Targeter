@@ -1,7 +1,7 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
-MOD_DESC="Auto add new packages to Tricky Store scope and Magisk denylist."
+MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
 
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
@@ -12,6 +12,7 @@ IS_MAGISK=false
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
+PACKAGES_SKIP_ADD="$CONFIG_DIR/.packages_skip_add"
 WHITELIST="$CONFIG_DIR/whitelist.txt"
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
@@ -51,6 +52,7 @@ done
 
 sort_packages > "$SNAPSHOT_PACKAGES"
 [ ! -f "$PACKAGES_AUTO_ADD" ] && touch "$PACKAGES_AUTO_ADD"
+[ ! -f "$PACKAGES_SKIP_ADD" ] && touch "$PACKAGES_SKIP_ADD"
 
 update_description "$MOD_DESC"
 
@@ -80,6 +82,12 @@ while true; do
             [ -z "$packages" ] && continue
             if check_exist_item "$packages" "$TARGET_LIST"; then
                 continue
+            elif check_exist_item "$packages" "$WHITELIST"; then
+                if ! check_exist_item "$packages" "$PACKAGES_SKIP_ADD"; then
+                    echo "$packages" >> "$PACKAGES_SKIP_ADD"
+                fi
+                clean_duplicate_items "$PACKAGES_SKIP_ADD"
+                continue
             else
                 echo "$packages" >> "$TARGET_LIST"
                 echo "$packages" >> "$PACKAGES_AUTO_ADD"
@@ -100,16 +108,21 @@ while true; do
                     sed -i "/^${packages}$/d" "$TARGET_LIST"
                 fi
             fi
+            if grep -qxF "$packages" "$PACKAGES_SKIP_ADD"; then
+                sed -i "/^${packages}$/d" "$PACKAGES_SKIP_ADD"
+            fi
         done
     fi
     
     total_denylist=0
     total_target_list=0
     total_auto_add=0
+    total_whitelist=0
 
     [ "$IS_MAGISK" = true ] && total_denylist=$(magisk --denylist ls | grep -c '[^[:space:]]')
     [ -f "$TARGET_LIST" ] && total_target_list=$(grep -c '[^[:space:]]' "$TARGET_LIST")
     [ -f "$PACKAGES_AUTO_ADD" ] && total_auto_add=$(grep -c '[^[:space:]]' "$PACKAGES_AUTO_ADD")
+    [ -f "$WHITELIST" ] && total_whitelist=$(grep -c '[^[:space:]]' "$WHITELIST")
 
     info_target="${total_target_list}"
     [ "$total_auto_add" -gt 0 ] && info_target="${info_target} (+${total_auto_add})"
@@ -117,7 +130,10 @@ while true; do
     info_denylist=""
     [ "$total_denylist" -gt 0 ] && info_denylist=", ✅Magisk Denylist: ${total_denylist} item(s)"
 
-    update_description "[✅Tricky Store scope: ${info_target} target(s)${info_denylist}] $MOD_DESC"
+    info_whitelist=""
+    [ "$total_whitelist" -gt 0 ] && info_whitelist=", ✅Whitelist: ${total_whitelist} item(s)"
+
+    update_description "[✅Tricky Store scope: ${info_target} target(s)${info_denylist}${info_whitelist}] $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
