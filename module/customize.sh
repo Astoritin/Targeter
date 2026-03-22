@@ -8,13 +8,12 @@ MOD_NAME="$(grep_prop name "$MOD_PROP")"
 MOD_VER="$(grep_prop version "$MOD_PROP") ($(grep_prop versionCode "$MOD_PROP"))"
 
 extract() {
-    file=$1
-    dir=$2
-    junk=${3:-false}
+    file="$1"
+    dir="${2:-$MODPATH}"
+    junk="${3:-false}"
     opts="-o"
 
-    [ -z "$dir" ] && dir="$MODPATH"
-    file_path="$dir/$file"
+    file_path="$dir/$file"  
     hash_path="$TMPDIR/$file.sha256"
 
     if [ "$junk" = true ]; then
@@ -22,6 +21,9 @@ extract() {
         file_path="$dir/$(basename "$file")"
         hash_path="$TMPDIR/$(basename "$file").sha256"
     fi
+
+    file_dir="$(dirname $file_path)"
+    mkdir -p "$file_dir" || abort "! Failed to create dir $dir!"
 
     unzip $opts "$ZIPFILE" "$file" -d "$dir" >&2
     [ -f "$file_path" ] || abort "! $file does NOT exist"
@@ -41,10 +43,10 @@ extract() {
 
 ui_print "- Setting up $MOD_NAME"
 ui_print "- Version: $MOD_VER"
-mkdir -p "$CONFIG_DIR"
 extract "customize.sh" "$TMPDIR"
 extract "module.prop"
 extract "service.sh"
+extract "whitelist.txt" "$CONFIG_DIR"
 extract "uninstall.sh"
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644

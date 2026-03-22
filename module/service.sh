@@ -12,6 +12,7 @@ IS_MAGISK=false
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
+WHITELIST="$CONFIG_DIR/whitelist.txt"
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
 
