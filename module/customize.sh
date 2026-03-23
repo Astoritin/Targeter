@@ -47,6 +47,7 @@ extract "customize.sh" "$TMPDIR"
 extract "module.prop"
 extract "service.sh"
 extract "exclude.txt" "$CONFIG_DIR"
+extract "mark.txt" "$CONFIG_DIR"
 extract "uninstall.sh"
 ui_print "- Setting permissions"
 set_perm_recursive "$MODPATH" 0 0 0755 0644
