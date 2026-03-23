@@ -6,7 +6,7 @@ MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
 EXCLUDE="$CONFIG_DIR/exclude.txt"
-MARK=$(cat "$CONFIG_DIR/mark.txt")
+MARK=$(cat "$CONFIG_DIR/mark.txt" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
@@ -151,9 +151,11 @@ while true; do
     total_custom=$((total_target_list - total_auto_add))
 
     mod_desc="✅Tricky Store: ${total_target_list}"
+
+    [ -z "$MARK" ] && MARK="N/A"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc} (auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
+        mod_desc="${mod_desc} (append mode: ${MARK}, auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
     fi
 
     [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
