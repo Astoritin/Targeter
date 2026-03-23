@@ -5,15 +5,15 @@ MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
 
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
-EXCLUDE="$CONFIG_DIR/exclude.txt"
+
+IS_MAGISK=false
+[ -z "$KSU" ] && [ -z "$APATCH" ] && command -v magisk >/dev/null 2>&1 && IS_MAGISK=true
 
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
 PACKAGES_SKIP_ADD="$CONFIG_DIR/.packages_skip_add"
-
-IS_MAGISK=false
-[ -z "$KSU" ] && [ -z "$APATCH" ] && command -v magisk >/dev/null 2>&1 && IS_MAGISK=true
+EXCLUDE="$CONFIG_DIR/exclude.txt"
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
 
@@ -72,37 +72,26 @@ while true; do
         continue
     fi
 
-    [ ! -f "$SNAPSHOT_PACKAGES_NOW" ] && touch "$SNAPSHOT_PACKAGES_NOW"
     sort_packages > "$SNAPSHOT_PACKAGES_NOW"
 
     NEW_ADD_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES" "$SNAPSHOT_PACKAGES_NOW")
     REMOVED_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES")
 
-    MARK=$(cat "$CONFIG_DIR/mark.txt" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-
     if [ -n "$NEW_ADD_PACKAGES" ]; then
-        echo "$NEW_ADD_PACKAGES" | while IFS= read -r package; do
-            [ -z "$package" ] && continue
-            if check_exist_item "$package" "$TARGET_LIST"; then
+        echo "$NEW_ADD_PACKAGES" | while IFS= read -r pkg; do
+            [ -z "$pkg" ] && continue
+            if check_exist_item "$pkg" "$TARGET_LIST"; then
                 continue
-            elif check_exist_item "$package" "$EXCLUDE"; then
-                if ! check_exist_item "$package" "$PACKAGES_SKIP_ADD"; then
-                    echo "" >> "$PACKAGES_SKIP_ADD"
-                    echo "$package" >> "$PACKAGES_SKIP_ADD"
+            elif check_exist_item "$pkg" "$EXCLUDE"; then
+                if ! check_exist_item "$pkg" "$PACKAGES_SKIP_ADD"; then
+                    echo "$pkg" >> "$PACKAGES_SKIP_ADD"
                 fi
                 clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 continue
             else
-                package_ts=""
-                case "$MARK" in
-                    '!' | '?') package_ts="${package}${MARK}" ;;
-                    *) package_ts="$package" ;;
-                esac
-                echo "" >> "$TARGET_LIST"
-                echo "$package_ts" >> "$TARGET_LIST"
-                echo "" >> "$PACKAGE_AUTO_ADD"
-                echo "$package" >> "$PACKAGES_AUTO_ADD"
-                [ "$IS_MAGISK" = true ] && magisk --denylist add "$package"
+                echo "$pkg" >> "$TARGET_LIST"
+                echo "$pkg" >> "$PACKAGES_AUTO_ADD"
+                [ "$IS_MAGISK" = true ] && magisk --denylist add "$pkg"
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
             fi
@@ -110,26 +99,17 @@ while true; do
     fi
 
     if [ -n "$REMOVED_PACKAGES" ]; then
-        echo "$REMOVED_PACKAGES" | while IFS= read -r package; do
-            [ -z "$package" ] && continue            
-            if grep -qxF "$package" "$PACKAGES_AUTO_ADD"; then
-                sed -i "/^${package}$/d" "$PACKAGES_AUTO_ADD"
-                [ "$IS_MAGISK" = true ] && magisk --denylist rm "$package"
-                if grep -qxF "$package" "$TARGET_LIST"; then
-                    sed -i "/^${package}$/d" "$TARGET_LIST"
-                else
-                    for mark in '!' '?'; do
-                        package_marked="${package}${mark}"
-                        if grep -qxF "$package_marked" "$TARGET_LIST"; then
-                            package_marked=$(printf '%s' "$package_marked" | sed 's/[.!?]/\\&/g')
-                            sed -i "/^${package_marked}$/d" "$TARGET_LIST"
-                            break
-                        fi
-                    done
+        echo "$REMOVED_PACKAGES" | while IFS= read -r pkg; do
+            [ -z "$pkg" ] && continue            
+            if grep -qxF "$pkg" "$PACKAGES_AUTO_ADD"; then
+                sed -i "/^${pkg}$/d" "$PACKAGES_AUTO_ADD"
+                [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg"
+                if grep -qxF "$pkg" "$TARGET_LIST"; then
+                    sed -i "/^${pkg}$/d" "$TARGET_LIST"
                 fi
             fi
-            if grep -qxF "$package" "$PACKAGES_SKIP_ADD"; then
-                sed -i "/^${package}$/d" "$PACKAGES_SKIP_ADD"
+            if grep -qxF "$pkg" "$PACKAGES_SKIP_ADD"; then
+                sed -i "/^${pkg}$/d" "$PACKAGES_SKIP_ADD"
             fi
         done
     fi
@@ -148,11 +128,9 @@ while true; do
     total_custom=$((total_target_list - total_auto_add))
 
     mod_desc="✅Tricky Store: ${total_target_list}"
-
-    [ -z "$MARK" ] && MARK="N\/A"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc} (append mode: ${MARK}, auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
+        mod_desc="${mod_desc} (auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
     fi
 
     [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
