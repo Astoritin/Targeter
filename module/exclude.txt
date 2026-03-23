@@ -66,6 +66,7 @@ me.weishu.kernelsu
 moe.shizuku.privileged.api
 name.mikanoshi.customiuizer
 nep.timeline.re_telegram
+net.sourceforge.opencamera
 org.fdroid.basic
 org.fdroid.fdroid
 org.lsposed.lspatch

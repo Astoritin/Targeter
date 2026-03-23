@@ -5,15 +5,15 @@ MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
 
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
-
-IS_MAGISK=false
-[ -z "$KSU" ] && [ -z "$APATCH" ] && command -v magisk >/dev/null 2>&1 && IS_MAGISK=true
+EXCLUDE="$CONFIG_DIR/exclude.txt"
 
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
 PACKAGES_SKIP_ADD="$CONFIG_DIR/.packages_skip_add"
-EXCLUDE="$CONFIG_DIR/exclude.txt"
+
+IS_MAGISK=false
+[ -z "$KSU" ] && [ -z "$APATCH" ] && command -v magisk >/dev/null 2>&1 && IS_MAGISK=true
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
 
@@ -44,6 +44,14 @@ clean_duplicate_items() {
     }
     END { for (i=1; i<=n; i++) print full[order[i]] }
     ' "$1" > "${1}.tmp" && mv "${1}.tmp" "$1"
+}
+
+append() {
+    value="$1"
+    conf="$2"
+    
+    [ -s "$conf" ] && [ "$(tail -c 1 "$conf" | wc -l)" -eq 0 ] && printf '\n' >> "$conf"
+    printf '%s\n' "$value" >> "$conf"
 }
 
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
@@ -84,13 +92,13 @@ while true; do
                 continue
             elif check_exist_item "$packages" "$EXCLUDE"; then
                 if ! check_exist_item "$packages" "$PACKAGES_SKIP_ADD"; then
-                    echo "$packages" >> "$PACKAGES_SKIP_ADD"
+                    append "$packages" "$PACKAGES_SKIP_ADD"
                 fi
                 clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 continue
             else
-                echo "$packages" >> "$TARGET_LIST"
-                echo "$packages" >> "$PACKAGES_AUTO_ADD"
+                append "$packages" "$TARGET_LIST"
+                append "$packages" "$PACKAGES_AUTO_ADD"
                 [ "$IS_MAGISK" = true ] && magisk --denylist add "$packages"
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
@@ -130,13 +138,13 @@ while true; do
     mod_desc="✅Tricky Store: ${total_target_list}"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc}. Auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add}"
+        mod_desc="${mod_desc} (auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
-    [ "$total_exclude" -gt 0 ] && mod_desc="${mod_desc}, ✅Exclude: ${total_exclude}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
+    [ "$total_exclude" -gt 0 ] && mod_desc="${mod_desc}, ✅Excluded: ${total_exclude}"
     
-    update_description "${mod_desc} | $MOD_DESC"
+    update_description "[${mod_desc}] $MOD_DESC"
 
     mv "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES"
     sleep 5
