@@ -95,7 +95,12 @@ while true; do
                 clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 continue
             else
-                append "$pkg" "$TARGET_LIST"
+                pkg_ts=""
+                case "$MARK" in
+                '!' | '?' ) pkg_ts="${pkg}${MARK}" ;;
+                *) pkg_ts="$pkg" ;;
+                esac
+                append "$pkg_ts" "$TARGET_LIST"
                 append "$pkg" "$PACKAGES_AUTO_ADD"
                 [ "$IS_MAGISK" = true ] && magisk --denylist add "$pkg"
                 clean_duplicate_items "$TARGET_LIST"
@@ -112,6 +117,15 @@ while true; do
                 [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
                     sed -i "/^${pkg}$/d" "$TARGET_LIST"
+                else
+                    for mark in '!' '?'; do
+                        pkgm="${pkg}${mark}"
+                        if grep -qxF "$pkgm" "$TARGET_LIST"; then
+                            pkgm=$(echo "$pkgm" | sed 's/[.!?]/\\&/g')
+                            sed -i "/^${pkgm}$/d" "$TARGET_LIST"
+                            break
+                        fi
+                    done
                 fi
             fi
             if grep -qxF "$pkg" "$PACKAGES_SKIP_ADD"; then
@@ -135,7 +149,11 @@ while true; do
 
     mod_desc="✅Tricky Store: ${total_target_list}"
 
-    [ -z "$MARK" ] && desc_mark="N\/A"
+    case "$MARK" in
+        '!') desc_mark="generate certificate";;
+        '?') desc_mark="leaf hack";;
+        *) desc_mark="N\/A";;
+    esac
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
         mod_desc="${mod_desc} (auto: ${total_auto_add} ($desc_mark), custom: ${total_custom}, skip: ${total_skip_add})"
