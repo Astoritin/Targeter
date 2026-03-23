@@ -13,7 +13,7 @@ SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
 PACKAGES_SKIP_ADD="$CONFIG_DIR/.packages_skip_add"
-EXCLUDED="$CONFIG_DIR/excluded.txt"
+EXCLUDE="$CONFIG_DIR/exclude.txt"
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
 
@@ -82,7 +82,7 @@ while true; do
             [ -z "$packages" ] && continue
             if check_exist_item "$packages" "$TARGET_LIST"; then
                 continue
-            elif check_exist_item "$packages" "$EXCLUDED"; then
+            elif check_exist_item "$packages" "$EXCLUDE"; then
                 if ! check_exist_item "$packages" "$PACKAGES_SKIP_ADD"; then
                     echo "$packages" >> "$PACKAGES_SKIP_ADD"
                 fi
@@ -118,23 +118,23 @@ while true; do
     total_target_list=0
     total_auto_add=0
     total_skip_add=0
-    total_excluded=0
+    total_exclude=0
 
     [ "$IS_MAGISK" = true ] && total_denylist=$(magisk --denylist ls | grep -c '[^[:space:]]')
     [ -f "$TARGET_LIST" ] && total_target_list=$(grep -c '[^[:space:]]' "$TARGET_LIST")
     [ -f "$PACKAGES_AUTO_ADD" ] && total_auto_add=$(grep -c '[^[:space:]]' "$PACKAGES_AUTO_ADD")
     [ -f "$PACKAGES_SKIP_ADD" ] && total_skip_add=$(grep -c '[^[:space:]]' "$PACKAGES_SKIP_ADD")
-    [ -f "$EXCLUDED" ] && total_excluded=$(grep -c '[^[:space:]]' "$EXCLUDED")
+    [ -f "$EXCLUDE" ] && total_exclude=$(grep -c '[^[:space:]]' "$EXCLUDE")
     total_custom=$((total_target_list - total_auto_add))
 
-    mod_desc="Tricky Store scope: ${total_target_list} 📌"
+    mod_desc="✅Tricky Store: ${total_target_list}"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc} | ${total_auto_add} auto 🎰 ${total_custom} custom 🎨 ${total_skip_add} skip ✅"
+        mod_desc="${mod_desc}. Auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add}"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc} | Magisk Denylist: ${total_denylist} 📑"
-    [ "$total_excluded" -gt 0 ] && mod_desc="${mod_desc} | Inbuilt Excluded List: ${total_excluded} 👉"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
+    [ "$total_exclude" -gt 0 ] && mod_desc="${mod_desc}, ✅Exclude: ${total_exclude}"
     
     update_description "${mod_desc} | $MOD_DESC"
 
