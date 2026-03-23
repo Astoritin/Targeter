@@ -6,7 +6,6 @@ MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
 EXCLUDE="$CONFIG_DIR/exclude.txt"
-MARK=$(cat "$CONFIG_DIR/mark.txt" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
 SNAPSHOT_PACKAGES="$CONFIG_DIR/.snapshot_packages"
 SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
@@ -47,14 +46,6 @@ clean_duplicate_items() {
     ' "$1" > "${1}.tmp" && mv "${1}.tmp" "$1"
 }
 
-append() {
-    value="$1"
-    conf="$2"
-    
-    [ -s "$conf" ] && [ "$(tail -c 1 "$conf" | wc -l)" -eq 0 ] && printf '\n' >> "$conf"
-    printf '%s\n' "$value" >> "$conf"
-}
-
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 1
 done
@@ -81,10 +72,13 @@ while true; do
         continue
     fi
 
+    [ ! -f "$SNAPSHOT_PACKAGES_NOW" ] && touch "$SNAPSHOT_PACKAGES_NOW"
     sort_packages > "$SNAPSHOT_PACKAGES_NOW"
 
     NEW_ADD_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES" "$SNAPSHOT_PACKAGES_NOW")
     REMOVED_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES")
+
+    MARK=$(cat "$CONFIG_DIR/mark.txt" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
     if [ -n "$NEW_ADD_PACKAGES" ]; then
         echo "$NEW_ADD_PACKAGES" | while IFS= read -r package; do
@@ -93,7 +87,8 @@ while true; do
                 continue
             elif check_exist_item "$package" "$EXCLUDE"; then
                 if ! check_exist_item "$package" "$PACKAGES_SKIP_ADD"; then
-                    append "$package" "$PACKAGES_SKIP_ADD"
+                    echo "" >> "$PACKAGES_SKIP_ADD"
+                    echo "$package" >> "$PACKAGES_SKIP_ADD"
                 fi
                 clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 continue
@@ -103,8 +98,10 @@ while true; do
                     '!' | '?') package_ts="${package}${MARK}" ;;
                     *) package_ts="$package" ;;
                 esac
-                append "$package_ts" "$TARGET_LIST"
-                append "$package" "$PACKAGES_AUTO_ADD"
+                echo "" >> "$TARGET_LIST"
+                echo "$package_ts" >> "$TARGET_LIST"
+                echo "" >> "$PACKAGE_AUTO_ADD"
+                echo "$package" >> "$PACKAGES_AUTO_ADD"
                 [ "$IS_MAGISK" = true ] && magisk --denylist add "$package"
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
@@ -152,7 +149,7 @@ while true; do
 
     mod_desc="✅Tricky Store: ${total_target_list}"
 
-    [ -z "$MARK" ] && MARK="N/A"
+    [ -z "$MARK" ] && MARK="N\/A"
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
         mod_desc="${mod_desc} (append mode: ${MARK}, auto: ${total_auto_add}, custom: ${total_custom}, skip: ${total_skip_add})"
