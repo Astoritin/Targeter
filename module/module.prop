@@ -3,4 +3,5 @@ name=Targeter
 version=1.0
 versionCode=1
 author=Astoritin
-description=Auto add new user packages to Tricky Store scope and Magisk denylist.
+description=Auto add new user packages to Tricky Store scope.
+updateJson=https://raw.githubusercontent.com/Astoritin/Targeter/main/upgrade/update.json

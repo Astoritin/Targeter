@@ -1,5 +1,5 @@
 ## Targeter
-A Magisk module to auto add new user packages to Tricky Store scope and Magisk denylist.
+A Magisk module to auto add new user packages to Tricky Store scope.
 
 ## Steps
 1. Flash Targeter.zip in Root Manager supported Magisk modules and then reboot.

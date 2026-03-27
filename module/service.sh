@@ -1,7 +1,7 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
-MOD_DESC="Auto add new user packages to Tricky Store scope and Magisk denylist."
+MOD_DESC="Auto add new user packages to Tricky Store scope."
 
 CONFIG_DIR="/data/adb/targeter"
 TARGET_LIST="/data/adb/tricky_store/target.txt"
