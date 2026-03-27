@@ -152,14 +152,14 @@ while true; do
     case "$MARK" in
         '!') desc_mark="Certificate Generate";;
         '?') desc_mark="Leaf Hack";;
-        *) desc_mark="N\/A";;
+        *) desc_mark="Auto";;
     esac
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
         mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add} (${total_exclude}), custom: ${total_custom}"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
     
     update_description "[${mod_desc}] $MOD_DESC"
 
