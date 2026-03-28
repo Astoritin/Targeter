@@ -1,6 +1,7 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
+MOD_ID="Targeter"
 MOD_DESC="Auto add new user packages to Tricky Store scope."
 
 CONFIG_DIR="/data/adb/targeter"
@@ -17,13 +18,47 @@ SNAPSHOT_PACKAGES_NOW="$CONFIG_DIR/.snapshot_packages_now"
 PACKAGES_AUTO_ADD="$CONFIG_DIR/.packages_auto_add"
 PACKAGES_SKIP_ADD="$CONFIG_DIR/.packages_skip_add"
 
-append() { [ -f "$2" ] || return 1; [ -n "$(tail -c1 "$2")" ] && echo >> "$2"; echo "$1" >> "$2"; }
+append() {
+    if [ -z "$1" ]; then
+        msg "Invalid content: $1"
+        return 1
+    if [ ! -f "$2" ]; then
+        msg "Not a file: $2"
+        return 2
+    fi
+
+    [ -n "$(tail -c1 "$2")" ] && echo >> "$2"
+    echo "$1" >> "$2"
+}
+
+remove() {
+    if [ -z "$1" ]; then
+        msg "Invalid content: $1"
+        return 1
+    if [ ! -f "$2" ]; then
+        msg "Not a file: $2"
+        return 2
+    fi
+
+    output_sed=$(sed -i "/^${1}$/d" "$2" 2>&1)
+    result_sed=$?
+
+    if [ "$result_sed" -eq 0 ]; then
+        msg "Remove $1 from $2 done"
+        return 0
+    else
+        msg "Failed to remove $1 from $2 ($result_sed)" "e"
+        [ -n "$output_sed" ] && msg "$output_sed"
+    fi
+}
 
 sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort; }
 
 update_description() { [ -n "$1" ] || return 1; sed -i "s/^description=.*/description=$1/" "$MODDIR/module.prop"; }
 
-check_exist_item() { [ -n "$1" ] || return 2; grep -qxF "${1}" "$2" || grep -qxF "${1}?" "$2" || grep -qxF "${1}!" "$2"; }
+check_exist_item() { [ -n "$1" ] || return 2; grep -qxF "$1" "$2" || grep -qxF "${1}?" "$2" || grep -qxF "${1}!" "$2"; }
+
+msg() { log -p "${2:-i}" -t "$MOD_ID" "$1"; }
 
 clean_duplicate_items() {
     [ -f "$1" ] || return 1
@@ -54,6 +89,8 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 1
 done
 
+msg "${MOD_ID} started"
+
 sort_packages > "$SNAPSHOT_PACKAGES"
 [ ! -f "$PACKAGES_AUTO_ADD" ] && touch "$PACKAGES_AUTO_ADD"
 [ ! -f "$PACKAGES_SKIP_ADD" ] && touch "$PACKAGES_SKIP_ADD"
@@ -82,15 +119,24 @@ while true; do
     REMOVED_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES")
 
     MARK=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' "$MARK_FILE" 2>/dev/null)
+    msg "Current append mode: $MARK"
 
     if [ -n "$NEW_ADD_PACKAGES" ]; then
+        msg "New add package(s) found"
         echo "$NEW_ADD_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
+            msg "Checkout: $pkg"
             if check_exist_item "$pkg" "$TARGET_LIST"; then
+                msg "${pkg}: Exists in scope"
                 continue
             elif check_exist_item "$pkg" "$EXCLUDE"; then
+                msg "${pkg}: Exists in exclude list"
                 if ! check_exist_item "$pkg" "$PACKAGES_SKIP_ADD"; then
-                    append "$pkg" "$PACKAGES_SKIP_ADD"
+                    if append "$pkg" "$PACKAGES_SKIP_ADD"; then
+                        msg "Skip record added: ${pkg}"
+                    else
+                        msg "Failed to add skip record: ${pkg} ($?)" "e"
+                    fi
                 fi
                 clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 continue
@@ -100,9 +146,9 @@ while true; do
                 '!' | '?' ) pkg_ts="${pkg}${MARK}" ;;
                 *) pkg_ts="$pkg" ;;
                 esac
-                append "$pkg_ts" "$TARGET_LIST"
-                append "$pkg" "$PACKAGES_AUTO_ADD"
-                [ "$IS_MAGISK" = true ] && magisk --denylist add "$pkg"
+                append "$pkg_ts" "$TARGET_LIST" && msg "Scope added: $pkg_ts"
+                append "$pkg" "$PACKAGES_AUTO_ADD" && msg "Auto add record added: $pkg"
+                [ "$IS_MAGISK" = true ] && magisk --denylist add "$pkg" && msg "Magisk Denylist item added: $pkg"
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
             fi
@@ -110,26 +156,32 @@ while true; do
     fi
 
     if [ -n "$REMOVED_PACKAGES" ]; then
+        msg "New remove package(s) found"
         echo "$REMOVED_PACKAGES" | while IFS= read -r pkg; do
-            [ -z "$pkg" ] && continue            
+            [ -z "$pkg" ] && continue
+            msg "Checkout: $pkg"
             if grep -qxF "$pkg" "$PACKAGES_AUTO_ADD"; then
-                sed -i "/^${pkg}$/d" "$PACKAGES_AUTO_ADD"
+                msg "${pkg}: Exists in auto add record"
+                remove "$pkg" "$PACKAGES_AUTO_ADD"
                 [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
-                    sed -i "/^${pkg}$/d" "$TARGET_LIST"
+                    msg "${pkg}: Found in scope"
+                    remove "$pkg" "$TARGET_LIST"
                 else
                     for mark in '!' '?'; do
                         pkgm="${pkg}${mark}"
                         if grep -qxF "$pkgm" "$TARGET_LIST"; then
+                            msg "${pkgm}: Found in scope"
                             pkgm=$(echo "$pkgm" | sed 's/[.!?]/\\&/g')
-                            sed -i "/^${pkgm}$/d" "$TARGET_LIST"
+                            remove "$pkgm" "$TARGET_LIST"
                             break
                         fi
                     done
                 fi
             fi
             if grep -qxF "$pkg" "$PACKAGES_SKIP_ADD"; then
-                sed -i "/^${pkg}$/d" "$PACKAGES_SKIP_ADD"
+                msg "${pkg}: Exists in skip add record"
+                remove "$pkg" "$PACKAGES_SKIP_ADD"
             fi
         done
     fi
