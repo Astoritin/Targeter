@@ -119,7 +119,6 @@ while true; do
     REMOVED_PACKAGES=$(grep -v -F -x -f "$SNAPSHOT_PACKAGES_NOW" "$SNAPSHOT_PACKAGES")
 
     MARK=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' "$MARK_FILE" 2>/dev/null)
-    msg "Current append mode: $MARK"
 
     if [ -n "$NEW_ADD_PACKAGES" ]; then
         msg "New add package(s) found"
