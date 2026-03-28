@@ -10,4 +10,4 @@ A Magisk module to auto add new user packages to Tricky Store scope.
 ## NOTICE
 1. Targeter won't append the packages already exists on device before flashing Targeter or in the exclude list.
 2. As for Magisk Denylist, only package name itself will be added, I don't have good stable idea to analyze the full processess of a package yet.
-3. Targeter will remove the packages automatically added by Targeter currently.
+3. Targeter will remove the packages when detecting packages uninstalled if they are automatically added by Targeter currently.
