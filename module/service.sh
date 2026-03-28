@@ -35,7 +35,7 @@ remove() {
     if [ -z "$1" ]; then
         msg "Invalid content: $1"
         return 1
-    if [ ! -f "$2" ]; then
+    elif [ ! -f "$2" ]; then
         msg "Not a file: $2"
         return 2
     fi
