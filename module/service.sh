@@ -169,28 +169,29 @@ while true; do
         echo "$REMOVED_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
             msg "Checkout: $pkg"
+
             if grep -qxF "$pkg" "$PACKAGES_AUTO_ADD"; then
-                msg "${pkg}: Exists in auto add record"
+                msg "${pkg}: exists in auto add record already"
                 remove "$pkg" "$PACKAGES_AUTO_ADD"
                 [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
-                    msg "${pkg}: Found in scope"
-                    remove "$pkg" "$TARGET_LIST"
+                    msg "${pkg}: exist in scope already"
+                    remove "$pkg" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
                 else
                     for mark in '!' '?'; do
                         pkgm="${pkg}${mark}"
                         if grep -qxF "$pkgm" "$TARGET_LIST"; then
-                            msg "${pkgm}: Found in scope"
+                            msg "Process scope item: ${pkgm}"
                             pkgm=$(echo "$pkgm" | sed 's/[.!?]/\\&/g')
-                            remove "$pkgm" "$TARGET_LIST"
+                            remove "$pkgm" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
                             break
                         fi
                     done
                 fi
             fi
             if grep -qxF "$pkg" "$PACKAGES_SKIP_ADD"; then
-                msg "${pkg}: Exists in skip add record"
-                remove "$pkg" "$PACKAGES_SKIP_ADD"
+                msg "${pkg}: exists in skip add record already"
+                remove "$pkg" "$PACKAGES_SKIP_ADD" && msg "Removed from auto add record: ${pkg}" || msg "Failed to remove from auto add record: ${pkg} ($?)" "e"
             fi
         done
     fi
@@ -208,7 +209,7 @@ while true; do
     [ -f "$EXCLUDE" ] && total_exclude=$(grep -c '[^[:space:]]' "$EXCLUDE")
     total_custom=$((total_target_list - total_auto_add))
 
-    mod_desc="✅Tricky Store: ${total_target_list}"
+    mod_desc="✅Tricky Store scope: ${total_target_list}"
 
     case "$MARK" in
         '!') desc_mark="Certificate Generate";;
@@ -220,7 +221,7 @@ while true; do
         mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add} (${total_exclude}), custom: ${total_custom}"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
     
     update_description "[${mod_desc}] $MOD_DESC"
 
