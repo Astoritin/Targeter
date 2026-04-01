@@ -129,56 +129,37 @@ while true; do
             msg "Checkout: $pkg"
 
             if check_exist_in_scope "$pkg" "$EXCLUDE"; then
-                msg "${pkg}: exists in exclude list"
+                msg "${pkg}: exists in exclude list already"
                 if [ "$IS_MAGISK" = true ]; then
-                    magisk --denylist rm "$pkg"
-                    if [ $? -eq 0 ]; then
-                        msg "${pkg}: removed from denylist"
-                    else
-                        msg "${pkg}: failed to remove from denylist ($?)" "e"
-                    fi
+                    magisk --denylist rm "$pkg" && msg "Removed from denylist: ${pkg}" || msg "Failed to remove from denylist: ${pkg} ($?)" "e"
                 fi
                 if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
                     clean_duplicate_items "$TARGET_LIST"
-                    if remove "$pkg" "$TARGET_LIST"; then
-                        msg "${pkg}: removed from scope"
-                    else
-                        msg "${pkg}: failed to remove from scope ($?)" "e"
-                    fi
+                    remove "$pkg" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
                 fi
                 if ! check_exist_in_scope "$pkg" "$PACKAGES_SKIP_ADD"; then
-                    if append "$pkg" "$PACKAGES_SKIP_ADD"; then
-                        msg "${pkg}: skip record added"
-                    else
-                        msg "${pkg}: failed to add skip record ($?)" "e"
-                    fi
+                    append "$pkg" "$PACKAGES_SKIP_ADD" && msg "Skip record added: ${pkg}" || msg "Failed to add skip record: ${pkg} ($?)" "e"
                     clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 fi
                 continue
             fi
 
             if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
-                msg "Skip adding ${pkg} to scope: exists already"
+                msg "${pkg}: exists in scope already"
             else
                 pkg_ts=""
                 case "$MARK" in
                 '!' | '?' ) pkg_ts="${pkg}${MARK}" ;;
                 *) pkg_ts="$pkg" ;;
                 esac
-                append "$pkg_ts" "$TARGET_LIST" && msg "Scope added: $pkg_ts"
-                append "$pkg" "$PACKAGES_AUTO_ADD" && msg "Auto add record added: $pkg"
+                append "$pkg_ts" "$TARGET_LIST" && msg "Scope added: ${pkg_ts}" || msg "Failed to add to scope: ${pkg_ts} ($?)" "e"
+                append "$pkg" "$PACKAGES_AUTO_ADD" && msg "Auto add record added: ${pkg}" || msg "Failed to add to auto add record: ${pkg} ($?)" "e"
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
             fi
 
             if [ "$IS_MAGISK" = true ]; then
-                if check_exist_in_denylist "$pkg"; then
-                    msg "Skip adding ${pkg} to denylist: exists already"
-                elif check_exist_in_scope "$pkg" "$EXCLUDE"; then
-                    msg "Skip adding ${pkg} to denylist: exists in exclude list"
-                else
-                    magisk --denylist add "$pkg" && msg "Denylist added: $pkg"
-                fi
+                check_exist_in_denylist "$pkg" && msg "${pkg}: exists in denylist already" || magisk --denylist add "$pkg" && msg "Denylist added: $pkg"
             fi
         done
     fi
