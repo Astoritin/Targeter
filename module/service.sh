@@ -127,18 +127,38 @@ while true; do
         echo "$NEW_ADD_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
             msg "Checkout: $pkg"
-            if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
-                msg "Skip adding ${pkg} to scope: exists already"
-            elif check_exist_in_scope "$pkg" "$EXCLUDE"; then
-                msg "Skip adding ${pkg} to scope: exists in exclude list"
-                if ! check_exist_in_scope "$pkg" "$PACKAGES_SKIP_ADD"; then
-                    if append "$pkg" "$PACKAGES_SKIP_ADD"; then
-                        msg "Skip record added: ${pkg}"
+
+            if check_exist_in_scope "$pkg" "$EXCLUDE"; then
+                msg "${pkg}: exists in exclude list"
+                if [ "$IS_MAGISK" = true ]; then
+                    magisk --denylist rm "$pkg"
+                    if [ $? -eq 0 ]; then
+                        msg "${pkg}: removed from denylist"
                     else
-                        msg "Failed to add skip record: ${pkg} ($?)" "e"
+                        msg "${pkg}: failed to remove from denylist ($?)" "e"
                     fi
                 fi
-                clean_duplicate_items "$PACKAGES_SKIP_ADD"
+                if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
+                    clean_duplicate_items "$TARGET_LIST"
+                    if remove "$pkg" "$TARGET_LIST"; then
+                        msg "${pkg}: removed from scope"
+                    else
+                        msg "${pkg}: failed to remove from scope ($?)" "e"
+                    fi
+                fi
+                if ! check_exist_in_scope "$pkg" "$PACKAGES_SKIP_ADD"; then
+                    if append "$pkg" "$PACKAGES_SKIP_ADD"; then
+                        msg "${pkg}: skip record added"
+                    else
+                        msg "${pkg}: failed to add skip record ($?)" "e"
+                    fi
+                    clean_duplicate_items "$PACKAGES_SKIP_ADD"
+                fi
+                continue
+            fi
+
+            if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
+                msg "Skip adding ${pkg} to scope: exists already"
             else
                 pkg_ts=""
                 case "$MARK" in
