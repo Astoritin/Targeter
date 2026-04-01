@@ -56,7 +56,9 @@ sort_packages() { pm list packages -3 | sed 's/package://' | grep -v '^$' | sort
 
 update_description() { [ -n "$1" ] || return 1; sed -i "s/^description=.*/description=$1/" "$MODDIR/module.prop"; }
 
-check_exist_item() { [ -n "$1" ] || return 2; grep -qxF "$1" "$2" || grep -qxF "${1}?" "$2" || grep -qxF "${1}!" "$2"; }
+check_exist_in_scope() { [ -n "$1" ] || return 2; grep -qxF "$1" "$2" || grep -qxF "${1}?" "$2" || grep -qxF "${1}!" "$2"; }
+
+check_exist_in_denylist() { [ -n "$1" ] || return 2; magisk --denylist ls | grep "$1"; }
 
 msg() { log -p "${2:-i}" -t "$MOD_ID" "$1"; }
 
@@ -125,12 +127,12 @@ while true; do
         echo "$NEW_ADD_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
             msg "Checkout: $pkg"
-            if check_exist_item "$pkg" "$TARGET_LIST"; then
+            if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
                 msg "${pkg}: Exists in scope"
                 continue
-            elif check_exist_item "$pkg" "$EXCLUDE"; then
+            elif check_exist_in_scope "$pkg" "$EXCLUDE"; then
                 msg "${pkg}: Exists in exclude list"
-                if ! check_exist_item "$pkg" "$PACKAGES_SKIP_ADD"; then
+                if ! check_exist_in_scope "$pkg" "$PACKAGES_SKIP_ADD"; then
                     if append "$pkg" "$PACKAGES_SKIP_ADD"; then
                         msg "Skip record added: ${pkg}"
                     else
