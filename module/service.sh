@@ -123,10 +123,10 @@ while true; do
     MARK=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' "$MARK_FILE" 2>/dev/null)
 
     if [ -n "$NEW_ADD_PACKAGES" ]; then
-        msg "New add package(s) found"
+        msg "Detect new add package(s)"
         echo "$NEW_ADD_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
-            msg "Checkout: $pkg"
+            msg "Process: $pkg"
 
             if check_exist_in_scope "$pkg" "$EXCLUDE"; then
                 msg "${pkg}: exists in exclude list already"
@@ -165,15 +165,15 @@ while true; do
     fi
 
     if [ -n "$REMOVED_PACKAGES" ]; then
-        msg "New remove package(s) found"
+        msg "Detect new remove package(s)"
         echo "$REMOVED_PACKAGES" | while IFS= read -r pkg; do
             [ -z "$pkg" ] && continue
-            msg "Checkout: $pkg"
+            msg "Process: $pkg"
 
             if grep -qxF "$pkg" "$PACKAGES_AUTO_ADD"; then
                 msg "${pkg}: exists in auto add record already"
                 remove "$pkg" "$PACKAGES_AUTO_ADD"
-                [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg"
+                [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg" && msg "Denylist removed: $pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
                     msg "${pkg}: exist in scope already"
                     remove "$pkg" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
@@ -209,19 +209,19 @@ while true; do
     [ -f "$EXCLUDE" ] && total_exclude=$(grep -c '[^[:space:]]' "$EXCLUDE")
     total_custom=$((total_target_list - total_auto_add))
 
-    mod_desc="✅Tricky Store scope: ${total_target_list}"
+    mod_desc="✅Tricky Store: ${total_target_list}"
 
     case "$MARK" in
         '!') desc_mark="Certificate Generate";;
         '?') desc_mark="Leaf Hack";;
-        *) desc_mark="Auto";;
+        *) desc_mark="N\/A";;
     esac
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add} (${total_exclude}), custom: ${total_custom}"
+        mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add}/${total_exclude}, custom: ${total_custom}"
     fi
 
-    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Magisk Denylist: ${total_denylist}"
+    [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
     
     update_description "[${mod_desc}] $MOD_DESC"
 
