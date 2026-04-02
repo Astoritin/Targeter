@@ -131,14 +131,26 @@ while true; do
             if check_exist_in_scope "$pkg" "$EXCLUDE"; then
                 msg "${pkg}: exists in exclude list already"
                 if [ "$IS_MAGISK" = true ]; then
-                    magisk --denylist rm "$pkg" && msg "Removed from denylist: ${pkg}" || msg "Failed to remove from denylist: ${pkg} ($?)" "e"
+                    if magisk --denylist rm "$pkg"; then
+                        msg "Removed from denylist: ${pkg}"
+                    else
+                        msg "Failed to remove from denylist: ${pkg} ($?)" "e"
+                    fi
                 fi
                 if check_exist_in_scope "$pkg" "$TARGET_LIST"; then
                     clean_duplicate_items "$TARGET_LIST"
-                    remove "$pkg" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                    if remove "$pkg" "$TARGET_LIST"; then
+                        msg "Removed from scope: ${pkg}"
+                    else
+                        msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                    fi
                 fi
                 if ! check_exist_in_scope "$pkg" "$PACKAGES_SKIP_ADD"; then
-                    append "$pkg" "$PACKAGES_SKIP_ADD" && msg "Skip record added: ${pkg}" || msg "Failed to add skip record: ${pkg} ($?)" "e"
+                    if append "$pkg" "$PACKAGES_SKIP_ADD"; then
+                        msg "Skip record added: ${pkg}"
+                    else
+                        msg "Failed to add skip record: ${pkg} ($?)" "e"
+                    fi
                     clean_duplicate_items "$PACKAGES_SKIP_ADD"
                 fi
                 continue
@@ -152,14 +164,23 @@ while true; do
                 '!' | '?' ) pkg_ts="${pkg}${MARK}" ;;
                 *) pkg_ts="$pkg" ;;
                 esac
-                append "$pkg_ts" "$TARGET_LIST" && msg "Scope added: ${pkg_ts}" || msg "Failed to add to scope: ${pkg_ts} ($?)" "e"
-                append "$pkg" "$PACKAGES_AUTO_ADD" && msg "Auto add record added: ${pkg}" || msg "Failed to add to auto add record: ${pkg} ($?)" "e"
+                if append "$pkg_ts" "$TARGET_LIST"; then
+                    msg "Scope added: ${pkg_ts}"
+                else
+                    msg "Failed to add to scope: ${pkg_ts} ($?)" "e"
+                fi
+                if append "$pkg" "$PACKAGES_AUTO_ADD"; then
+                    msg "Auto add record added: ${pkg}"
+                else
+                    msg "Failed to add to auto add record: ${pkg} ($?)" "e"
+                fi
                 clean_duplicate_items "$TARGET_LIST"
                 clean_duplicate_items "$PACKAGES_AUTO_ADD"
             fi
 
             if [ "$IS_MAGISK" = true ]; then
-                check_exist_in_denylist "$pkg" && msg "${pkg}: exists in denylist already" || magisk --denylist add "$pkg" && msg "Denylist added: $pkg"
+                check_exist_in_denylist "$pkg" && msg "${pkg}: exists in denylist already"
+                magisk --denylist add "$pkg" && msg "Denylist added: $pkg"
             fi
         done
     fi
@@ -176,14 +197,22 @@ while true; do
                 [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg" && msg "Denylist removed: $pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
                     msg "${pkg}: exist in scope already"
-                    remove "$pkg" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                    if remove "$pkg" "$TARGET_LIST";
+                        msg "Removed from scope: ${pkg}"
+                    else
+                        msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                    fi
                 else
                     for mark in '!' '?'; do
                         pkgm="${pkg}${mark}"
                         if grep -qxF "$pkgm" "$TARGET_LIST"; then
                             msg "Process scope item: ${pkgm}"
                             pkgm=$(echo "$pkgm" | sed 's/[.!?]/\\&/g')
-                            remove "$pkgm" "$TARGET_LIST" && msg "Removed from scope: ${pkg}" || msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                            if remove "$pkgm" "$TARGET_LIST"; then
+                                msg "Removed from scope: ${pkg}"
+                            else
+                                msg "Failed to remove from scope: ${pkg} ($?)" "e"
+                            fi
                             break
                         fi
                     done
@@ -191,7 +220,11 @@ while true; do
             fi
             if grep -qxF "$pkg" "$PACKAGES_SKIP_ADD"; then
                 msg "${pkg}: exists in skip add record already"
-                remove "$pkg" "$PACKAGES_SKIP_ADD" && msg "Removed from auto add record: ${pkg}" || msg "Failed to remove from auto add record: ${pkg} ($?)" "e"
+                if remove "$pkg" "$PACKAGES_SKIP_ADD"; then
+                    msg "Removed from auto add record: ${pkg}"
+                else
+                    msg "Failed to remove from auto add record: ${pkg} ($?)" "e"
+                fi
             fi
         done
     fi
