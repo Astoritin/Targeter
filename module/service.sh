@@ -197,7 +197,7 @@ while true; do
                 [ "$IS_MAGISK" = true ] && magisk --denylist rm "$pkg" && msg "Denylist removed: $pkg"
                 if grep -qxF "$pkg" "$TARGET_LIST"; then
                     msg "${pkg}: exist in scope already"
-                    if remove "$pkg" "$TARGET_LIST";
+                    if remove "$pkg" "$TARGET_LIST"; then
                         msg "Removed from scope: ${pkg}"
                     else
                         msg "Failed to remove from scope: ${pkg} ($?)" "e"
