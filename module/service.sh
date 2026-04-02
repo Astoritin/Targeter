@@ -251,7 +251,7 @@ while true; do
     esac
     
     if [ "$total_auto_add" -gt 0 ] || [ "$total_skip_add" -gt 0 ]; then
-        mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add}/${total_exclude}, custom: ${total_custom}"
+        mod_desc="${mod_desc}, auto: ${total_auto_add} (${desc_mark}), skip: ${total_skip_add}\/${total_exclude}, custom: ${total_custom}"
     fi
 
     [ "$total_denylist" -gt 0 ] && mod_desc="${mod_desc}, ✅Denylist: ${total_denylist}"
