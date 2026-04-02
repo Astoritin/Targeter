@@ -1,13 +1,13 @@
 ## Targeter
-A Magisk module to auto add new user packages to Tricky Store scope.
+A Magisk module to auto add new user packages to Tricky Store scope / 一个用于将新软件包名加入 Tricky Store 作用域的 Magisk 模块
 
-### Steps
-1. Flash Targeter.zip in Root Manager supported Magisk modules and then reboot.
-2. Targeter will work automatically as detecting the new user packages.
-3. Set append mark of Tricky Store in `/data/adb/Targeter/mark.txt`. None is let Tricky Store decide which mode to use (Auto), `!` is Certificate Generate mode, `?` is Leaf Hack mode.
-4. Targeter Built-in Exclude List is in `/data/adb/Targeter/exclude.txt`, every packages listed will be ignored as detecting new packages added.
-
-### NOTICE
-1. Targeter won't append the packages already exists on device before flashing Targeter or in the exclude list.
-2. As for Magisk Denylist, only package name itself will be added, I don't have good stable idea to analyze the full processess of a package yet.
-3. Targeter will remove the packages when detecting packages uninstalled if they are automatically added by Targeter currently.
+### 1.0.1
+- Separate the logic code handling Tricky Store scope and Magisk Denylist
+- Fix some error
+- Targeter will output the logs to logcat
+- Make Targeter module description output brief
+***
+- 分离处理 Tricky Store 作用域和 Magisk 排除列表的逻辑代码
+- 修复一些小错误
+- Targeter会将日志输出到 logcat
+- 让 Targeter 的模块描述更简短

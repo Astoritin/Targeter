@@ -1,6 +1,6 @@
 {
-    "versionCode": 1,
-    "version": "v1.0",
-    "zipUrl": "https://github.com/Astoritin/Targeter/releases/download/1.0/Targeter-1.0.zip",
+    "versionCode": 2,
+    "version": "v1.0.1",
+    "zipUrl": "https://github.com/Astoritin/Targeter/releases/download/1.0.1/Targeter-1.0.1.zip",
     "changelog": "https://raw.githubusercontent.com/Astoritin/Targeter/main/upgrade/changelog.md"
 }
