@@ -66,10 +66,13 @@ me.weishu.kernelsu
 moe.shizuku.privileged.api
 name.mikanoshi.customiuizer
 nep.timeline.re_telegram
-net.sourceforge.opencamera
 org.fdroid.basic
 org.fdroid.fdroid
 org.lsposed.lspatch
 org.starx_software_lab.ntp_server_changer
 org.swiftapps.swiftbackup
 rikka.appops
+com.c3r5b8.telegram_monet
+com.example.piliplus
+org.fcitx.fcitx5.android.plugin.rime
+com.island.recorder
